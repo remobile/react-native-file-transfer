@@ -1,7 +1,7 @@
 {
-    "name": "react-native-file-transfer",
+    "name": "@remobile/react-native-file-transfer",
         "version": "1.0.0",
-        "description": "A file-transfer for react-native",
+        "description": "A file-transfer for react-native, code come from cordova, support for android and ios",
         "main": "index.js",
         "author": {
             "name": "YunJiang.Fang",
@@ -14,6 +14,9 @@
             "ios",
             "android",
             "file-transfer",
+            "upload",
+            "download",
+            "progress",
             "remobile",
             "mobile"
         ],
