@@ -9,13 +9,13 @@ npm install @remobile/react-native-file-transfer --save
 ### Installation (iOS)
 * Drag RCTFileTransfer.xcodeproj to your project on Xcode.
 * Click on your main project file (the one that represents the .xcodeproj) select Build Phases and drag libRCTFileTransfer.a from the Products folder inside the RCTFileTransfer.xcodeproj.
-* Look for Header Search Paths and make sure it contains both $(SRCROOT)/../react-native/React as recursive.
+* Look for Header Search Paths and make sure it contains $(SRCROOT)/../../../react-native/React as recursive.
 
 ### Installation (Android)
 ```gradle
 ...
 include ':react-native-file-transfer'
-project(':react-native-file-transfer').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-file-transfer/android')
+project(':react-native-file-transfer').projectDir = new File(rootProject.projectDir, '../node_modules/@remobile/react-native-file-transfer/android')
 ```
 
 * In `android/app/build.gradle`
