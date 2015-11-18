@@ -61,6 +61,7 @@ extern NSString* const kOptionsKeyCookie;
 @end
 
 @class CDVFileTransferEntityLengthRequest;
+@class CDVCommandDelegateImpl;
 
 @interface CDVFileTransferDelegate : NSObject {}
 
@@ -73,6 +74,7 @@ extern NSString* const kOptionsKeyCookie;
 @property (nonatomic, strong) CDVFileTransfer* command;
 @property (nonatomic, assign) CDVFileTransferDirection direction;
 @property (nonatomic, strong) NSURLConnection* connection;
+@property (nonatomic, strong) CDVCommandDelegateImpl* commandDelegate;
 @property (nonatomic, copy) NSString* objectId;
 @property (nonatomic, copy) NSString* source;
 @property (nonatomic, copy) NSString* target;

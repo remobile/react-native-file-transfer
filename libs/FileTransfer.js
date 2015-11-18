@@ -24,7 +24,7 @@ var React = require('react-native');
 var {
     NativeModules
 } = React;
-console.log(NativeModules);
+
 var CRTFileTransfer = NativeModules.FileTransfer;
 
 var FileUploadOptions = require('./FileUploadOptions.js');

@@ -8,8 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		327632EA1BF99AC6004DA88E /* CDVFileTransfer.m in Sources */ = {isa = PBXBuildFile; fileRef = 327632E91BF99AC6004DA88E /* CDVFileTransfer.m */; };
-		327633741BFB1778004DA88E /* CDVCommandDelegateImpl.m in Sources */ = {isa = PBXBuildFile; fileRef = 327633711BFB1778004DA88E /* CDVCommandDelegateImpl.m */; };
-		327633751BFB1778004DA88E /* CDVPluginResult.m in Sources */ = {isa = PBXBuildFile; fileRef = 327633731BFB1778004DA88E /* CDVPluginResult.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -28,10 +26,6 @@
 		327632CE1BF99A2F004DA88E /* libCRTFileTransfer.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libCRTFileTransfer.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		327632E81BF99AC6004DA88E /* CDVFileTransfer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CDVFileTransfer.h; sourceTree = "<group>"; };
 		327632E91BF99AC6004DA88E /* CDVFileTransfer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CDVFileTransfer.m; sourceTree = "<group>"; };
-		327633701BFB1778004DA88E /* CDVCommandDelegateImpl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CDVCommandDelegateImpl.h; sourceTree = "<group>"; };
-		327633711BFB1778004DA88E /* CDVCommandDelegateImpl.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CDVCommandDelegateImpl.m; sourceTree = "<group>"; };
-		327633721BFB1778004DA88E /* CDVPluginResult.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CDVPluginResult.h; sourceTree = "<group>"; };
-		327633731BFB1778004DA88E /* CDVPluginResult.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CDVPluginResult.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -64,22 +58,10 @@
 		327632D01BF99A2F004DA88E /* CRTFileTransfer */ = {
 			isa = PBXGroup;
 			children = (
-				3276336F1BFB1778004DA88E /* cordova */,
 				327632E81BF99AC6004DA88E /* CDVFileTransfer.h */,
 				327632E91BF99AC6004DA88E /* CDVFileTransfer.m */,
 			);
 			path = CRTFileTransfer;
-			sourceTree = "<group>";
-		};
-		3276336F1BFB1778004DA88E /* cordova */ = {
-			isa = PBXGroup;
-			children = (
-				327633701BFB1778004DA88E /* CDVCommandDelegateImpl.h */,
-				327633711BFB1778004DA88E /* CDVCommandDelegateImpl.m */,
-				327633721BFB1778004DA88E /* CDVPluginResult.h */,
-				327633731BFB1778004DA88E /* CDVPluginResult.m */,
-			);
-			path = cordova;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -138,9 +120,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				327633741BFB1778004DA88E /* CDVCommandDelegateImpl.m in Sources */,
 				327632EA1BF99AC6004DA88E /* CDVFileTransfer.m in Sources */,
-				327633751BFB1778004DA88E /* CDVPluginResult.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -233,6 +213,7 @@
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
 					"$(SRCROOT)/../../../react-native/React/**",
 					"$(SRCROOT)/../../../../node_modules/react-native/React/**",
+					"$(SRCROOT)/../../react-native-cordova/ios/RCTCordova",
 				);
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -248,6 +229,7 @@
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
 					"$(SRCROOT)/../../../react-native/React/**",
 					"$(SRCROOT)/../../../../node_modules/react-native/React/**",
+					"$(SRCROOT)/../../react-native-cordova/ios/RCTCordova",
 				);
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = "$(TARGET_NAME)";
