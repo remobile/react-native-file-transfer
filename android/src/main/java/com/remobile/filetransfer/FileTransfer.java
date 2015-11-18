@@ -58,6 +58,7 @@ import android.os.Build;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
+import com.facebook.common.logging.FLog;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.remobile.cordova.*;
 import com.facebook.react.bridge.*;
@@ -78,6 +79,7 @@ public class FileTransfer extends ReactContextBaseJavaModule {
     private static HashMap<String, RequestContext> activeRequests = new HashMap<String, RequestContext>();
     private static final int MAX_BUFFER_SIZE = 16 * 1024;
 
+    public static String FLOG_TAG = "RCTFileTransfer";
     private ExecutorService threadPool;
 
     public FileTransfer(ReactApplicationContext reactContext) {
@@ -96,7 +98,7 @@ public class FileTransfer extends ReactContextBaseJavaModule {
         try {
             this.execute(action, JsonConvert.reactToJSON(args), new CallbackContext(success, error));
         } catch (Exception ex) {
-            error.invoke("Unexpected error:" + ex.getMessage());
+            FLog.e(FLOG_TAG, "Unexpected error:" + ex.getMessage());
         }
     }
 
@@ -106,7 +108,7 @@ public class FileTransfer extends ReactContextBaseJavaModule {
         try {
             this.execute(action, JsonConvert.reactToJSON(args), new CallbackContext(success, error));
         } catch (Exception ex) {
-            error.invoke("Unexpected error:" + ex.getMessage());
+            FLog.e(FLOG_TAG, "Unexpected error:" + ex.getMessage());
         }
     }
 
@@ -116,7 +118,7 @@ public class FileTransfer extends ReactContextBaseJavaModule {
         try {
             this.execute(action, JsonConvert.reactToJSON(args), new CallbackContext(success, error));
         } catch (Exception ex) {
-            error.invoke("Unexpected error:" + ex.getMessage());
+            FLog.e(FLOG_TAG, "Unexpected error:" + ex.getMessage());
         }
     }
 
