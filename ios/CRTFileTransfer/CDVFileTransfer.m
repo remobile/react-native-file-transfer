@@ -17,17 +17,12 @@
  under the License.
  */
 
-#import "RCTBridge.h"
-#import "RCTEventDispatcher.h"
 #import "CDVFileTransfer.h"
-#import "CDVCommandDelegateImpl.h"
 
 #import <AssetsLibrary/ALAsset.h>
 #import <AssetsLibrary/ALAssetRepresentation.h>
 #import <AssetsLibrary/ALAssetsLibrary.h>
 #import <CFNetwork/CFNetwork.h>
-
-#define SET_DEFAULT(obj, defaultValue) ([obj isNull]?defaultValue:obj)
 
 #ifndef DLog
 #ifdef DEBUG
@@ -40,6 +35,10 @@
 @interface CDVFileTransfer ()
 // Sets the requests headers for the request.
 - (void)applyRequestHeaders:(NSDictionary*)headers toRequest:(NSMutableURLRequest*)req;
+// Creates a delegate to handle an upload.
+- (CDVFileTransferDelegate*)delegateForUploadCommand:(CDVInvokedUrlCommand*)command;
+// Creates an NSData* for the file for the given upload arguments.
+- (void)fileDataForUploadCommand:(CDVInvokedUrlCommand*)command;
 @end
 
 // Buffer size to use for streaming uploads.
@@ -77,7 +76,6 @@ static CFIndex WriteDataToStream(NSData* data, CFWriteStreamRef stream)
 }
 
 @implementation CDVFileTransfer
-
 @synthesize activeTransfers;
 @synthesize bridge = _bridge;
 
@@ -86,10 +84,19 @@ RCT_EXPORT_MODULE(FileTransfer)
 - (id)init {
     self = [super init];
     if (self) {
-        activeTransfers = [[NSMutableDictionary alloc] init];
+        [self pluginInitialize];
     }
     return self;
 }
+
+RCT_EXPORT_CORDOVA_METHOD(download);
+RCT_EXPORT_CORDOVA_METHOD(upload);
+RCT_EXPORT_CORDOVA_METHOD(abort);
+
+- (void)pluginInitialize {
+    activeTransfers = [[NSMutableDictionary alloc] init];
+}
+
 
 - (NSString*)escapePathComponentForUrlString:(NSString*)urlString
 {
@@ -142,24 +149,24 @@ RCT_EXPORT_MODULE(FileTransfer)
     }
 }
 
-- (NSURLRequest*)requestForUploadCommand:(NSArray*)args fileData:(NSData*)fileData commandDelegate:(CDVCommandDelegateImpl*)commandDelegate
+- (NSURLRequest*)requestForUploadCommand:(CDVInvokedUrlCommand*)command fileData:(NSData*)fileData
 {
     // arguments order from js: [filePath, server, fileKey, fileName, mimeType, params, debug, chunkedMode]
     // however, params is a JavaScript object and during marshalling is put into the options dict,
     // thus debug and chunkedMode are the 6th and 7th arguments
-    NSString* target = args[0];
-    NSString* server = args[1];
-    NSString* fileKey = SET_DEFAULT(args[2], @"file");
-    NSString* fileName = SET_DEFAULT(args[3], @"image.jpg");
-    NSString* mimeType = SET_DEFAULT(args[4], @"image/jpeg");
-    NSDictionary* options =  SET_DEFAULT(args[5], nil);
+    NSString* target = [command argumentAtIndex:0];
+    NSString* server = [command argumentAtIndex:1];
+    NSString* fileKey = [command argumentAtIndex:2 withDefault:@"file"];
+    NSString* fileName = [command argumentAtIndex:3 withDefault:@"no-filename"];
+    NSString* mimeType = [command argumentAtIndex:4 withDefault:nil];
+    NSDictionary* options = [command argumentAtIndex:5 withDefault:nil];
     //    BOOL trustAllHosts = [[command argumentAtIndex:6 withDefault:[NSNumber numberWithBool:YES]] boolValue]; // allow self-signed certs
-    BOOL chunkedMode = [SET_DEFAULT(args[7], [NSNumber numberWithBool:YES]) boolValue];
-    NSDictionary* headers = SET_DEFAULT(args[8], nil);
+    BOOL chunkedMode = [[command argumentAtIndex:7 withDefault:[NSNumber numberWithBool:YES]] boolValue];
+    NSDictionary* headers = [command argumentAtIndex:8 withDefault:nil];
     // Allow alternative http method, default to POST. JS side checks
     // for allowed methods, currently PUT or POST (forces POST for
     // unrecognised values)
-    NSString* httpMethod = SET_DEFAULT(args[10], @"POST");
+    NSString* httpMethod = [command argumentAtIndex:10 withDefault:@"POST"];
     CDVPluginResult* result = nil;
     CDVFileTransferError errorCode = 0;
     
@@ -176,7 +183,7 @@ RCT_EXPORT_MODULE(FileTransfer)
     
     if (errorCode > 0) {
         result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:[self createFileTransferError:errorCode AndSource:target AndTarget:server]];
-        [commandDelegate sendPluginResult:result];
+        [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
         return nil;
     }
     
@@ -244,7 +251,7 @@ RCT_EXPORT_MODULE(FileTransfer)
         CFStreamCreateBoundPair(NULL, &readStream, &writeStream, kStreamBufferSize);
         [req setHTTPBodyStream:CFBridgingRelease(readStream)];
         
-        [commandDelegate runInBackground:^{
+        [self.commandDelegate runInBackground:^{
             if (CFWriteStreamOpen(writeStream)) {
                 if (multipartFormUpload) {
                     NSData* chunks[] = { postBodyBeforeFile, fileData, postBodyAfterFile };
@@ -277,17 +284,17 @@ RCT_EXPORT_MODULE(FileTransfer)
     return req;
 }
 
-- (CDVFileTransferDelegate*)delegateForUploadCommand:(NSArray*)args commandDelegate:(CDVCommandDelegateImpl*)commandDelegate
+- (CDVFileTransferDelegate*)delegateForUploadCommand:(CDVInvokedUrlCommand*)command
 {
-    NSString* source = args[0];
-    NSString* server = args[1];
-    BOOL trustAllHosts = [SET_DEFAULT(args[6], [NSNumber numberWithBool:NO]) boolValue]; // allow self-signed certs
-    NSString* objectId = args[9];
+    NSString* source = [command argumentAtIndex:0];
+    NSString* server = [command argumentAtIndex:1];
+    BOOL trustAllHosts = [[command argumentAtIndex:6 withDefault:[NSNumber numberWithBool:NO]] boolValue]; // allow self-signed certs
+    NSString* objectId = [command argumentAtIndex:9];
     
     CDVFileTransferDelegate* delegate = [[CDVFileTransferDelegate alloc] init];
     
     delegate.command = self;
-    delegate.commandDelegate = commandDelegate;
+    delegate.callbackId = command.callbackId;
     delegate.direction = CDV_TRANSFER_UPLOAD;
     delegate.objectId = objectId;
     delegate.source = source;
@@ -297,10 +304,10 @@ RCT_EXPORT_MODULE(FileTransfer)
     return delegate;
 }
 
-- (void)fileDataForUploadCommand:(NSArray *)args commandDelegate:(CDVCommandDelegateImpl*)commandDelegate
+- (void)fileDataForUploadCommand:(CDVInvokedUrlCommand*)command
 {
-    NSString* source = (NSString*)args[0];
-    NSString* server = (NSString*)args[1];
+    NSString* source = (NSString*)[command argumentAtIndex:0];
+    NSString* server = [command argumentAtIndex:1];
     NSError* __autoreleasing err = nil;
     
     // Extract the path part out of a file: URL.
@@ -308,7 +315,7 @@ RCT_EXPORT_MODULE(FileTransfer)
     if (filePath == nil) {
         // We couldn't find the asset.  Send the appropriate error.
         CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:[self createFileTransferError:NOT_FOUND_ERR AndSource:source AndTarget:server]];
-        [commandDelegate sendPluginResult:result];
+        [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
         return;
     }
     
@@ -318,27 +325,27 @@ RCT_EXPORT_MODULE(FileTransfer)
     if (err != nil) {
         NSLog(@"Error opening file %@: %@", source, err);
         CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:[self createFileTransferError:NOT_FOUND_ERR AndSource:source AndTarget:server]];
-        [commandDelegate sendPluginResult:result];
+        [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
     } else {
-        [self uploadData:fileData args:args commandDelegate:commandDelegate];
+        [self uploadData:fileData command:command];
     }
 }
 
-RCT_EXPORT_METHOD(upload:(NSArray *)args success:(RCTResponseSenderBlock)success error:(RCTResponseSenderBlock)error) {
-    CDVCommandDelegateImpl* commandDelegate = [[CDVCommandDelegateImpl alloc]initWithCallback:success error:error];
+- (void)upload:(CDVInvokedUrlCommand*)command
+{
     // fileData and req are split into helper functions to ease the unit testing of delegateForUpload.
     // First, get the file data.  This method will call `uploadData:command`.
-    [self fileDataForUploadCommand:args commandDelegate:commandDelegate];
+    [self fileDataForUploadCommand:command];
 }
 
-- (void)uploadData:(NSData*)fileData args:(NSArray *)args commandDelegate:(CDVCommandDelegateImpl*)commandDelegate
+- (void)uploadData:(NSData*)fileData command:(CDVInvokedUrlCommand*)command
 {
-    NSURLRequest* req = [self requestForUploadCommand:args fileData:fileData commandDelegate:commandDelegate];
+    NSURLRequest* req = [self requestForUploadCommand:command fileData:fileData];
     
     if (req == nil) {
         return;
     }
-    CDVFileTransferDelegate* delegate = [self delegateForUploadCommand:args commandDelegate:commandDelegate];
+    CDVFileTransferDelegate* delegate = [self delegateForUploadCommand:command];
     delegate.connection = [[NSURLConnection alloc] initWithRequest:req delegate:delegate startImmediately:NO];
     if (self.queue == nil) {
         self.queue = [[NSOperationQueue alloc] init];
@@ -356,28 +363,28 @@ RCT_EXPORT_METHOD(upload:(NSArray *)args success:(RCTResponseSenderBlock)success
     [delegate.connection start];
 }
 
-RCT_EXPORT_METHOD(abort:(NSArray *)args success:(RCTResponseSenderBlock)success error:(RCTResponseSenderBlock)error) {
-    CDVCommandDelegateImpl* commandDelegate = [[CDVCommandDelegateImpl alloc]initWithCallback:success error:error];
-    NSString* objectId = args[0];
+- (void)abort:(CDVInvokedUrlCommand*)command
+{
+    NSString* objectId = [command argumentAtIndex:0];
     
     @synchronized (activeTransfers) {
         CDVFileTransferDelegate* delegate = activeTransfers[objectId];
         if (delegate != nil) {
             [delegate cancelTransfer:delegate.connection];
             CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:[self createFileTransferError:CONNECTION_ABORTED AndSource:delegate.source AndTarget:delegate.target]];
-            [commandDelegate sendPluginResult:result];
+            [self.commandDelegate sendPluginResult:result callbackId:delegate.callbackId];
         }
     }
 }
 
-RCT_EXPORT_METHOD(download:(NSArray *)args success:(RCTResponseSenderBlock)success error:(RCTResponseSenderBlock)error) {
-    CDVCommandDelegateImpl* commandDelegate = [[CDVCommandDelegateImpl alloc]initWithCallback:success error:error];
+- (void)download:(CDVInvokedUrlCommand*)command
+{
     DLog(@"File Transfer downloading file...");
-    NSString* source = args[0];
-    NSString* target = args[1];
-    BOOL trustAllHosts = [SET_DEFAULT(args[2],[NSNumber numberWithBool:NO]) boolValue]; // allow self-signed certs
-    NSString* objectId = args[3];
-    NSDictionary* headers = SET_DEFAULT(args[4],nil);
+    NSString* source = [command argumentAtIndex:0];
+    NSString* target = [command argumentAtIndex:1];
+    BOOL trustAllHosts = [[command argumentAtIndex:2 withDefault:[NSNumber numberWithBool:NO]] boolValue]; // allow self-signed certs
+    NSString* objectId = [command argumentAtIndex:3];
+    NSDictionary* headers = [command argumentAtIndex:4 withDefault:nil];
     
     CDVPluginResult* result = nil;
     CDVFileTransferError errorCode = 0;
@@ -391,7 +398,7 @@ RCT_EXPORT_METHOD(download:(NSArray *)args success:(RCTResponseSenderBlock)succe
     
     if (errorCode > 0) {
         result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:[self createFileTransferError:errorCode AndSource:source AndTarget:target]];
-        [commandDelegate sendPluginResult:result];
+        [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
         return;
     }
     
@@ -401,9 +408,9 @@ RCT_EXPORT_METHOD(download:(NSArray *)args success:(RCTResponseSenderBlock)succe
     CDVFileTransferDelegate* delegate = [[CDVFileTransferDelegate alloc] init];
     delegate.command = self;
     delegate.direction = CDV_TRANSFER_DOWNLOAD;
+    delegate.callbackId = command.callbackId;
     delegate.objectId = objectId;
     delegate.source = source;
-    delegate.commandDelegate = commandDelegate;
     delegate.target = target;
     delegate.trustAllHosts = trustAllHosts;
     delegate.backgroundTaskID = [[UIApplication sharedApplication] beginBackgroundTaskWithExpirationHandler:^{
@@ -521,7 +528,7 @@ RCT_EXPORT_METHOD(download:(NSArray *)args success:(RCTResponseSenderBlock)succe
 
 @implementation CDVFileTransferDelegate
 
-@synthesize connection = _connection, source, target, responseData, responseHeaders, command, bytesTransfered, bytesExpected, direction, responseCode, objectId, targetFileHandle;
+@synthesize callbackId, connection = _connection, source, target, responseData, responseHeaders, command, bytesTransfered, bytesExpected, direction, responseCode, objectId, targetFileHandle;
 
 - (void)connectionDidFinishLoading:(NSURLConnection*)connection
 {
@@ -554,6 +561,7 @@ RCT_EXPORT_METHOD(download:(NSArray *)args success:(RCTResponseSenderBlock)succe
             [self.targetFileHandle closeFile];
             self.targetFileHandle = nil;
             DLog(@"File Transfer Download success");
+            
             result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:@{@"file":self.target}];
         } else {
             downloadResponse = [[NSString alloc] initWithData:self.responseData encoding:NSUTF8StringEncoding];
@@ -562,7 +570,8 @@ RCT_EXPORT_METHOD(download:(NSArray *)args success:(RCTResponseSenderBlock)succe
             result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:[command createFileTransferError:errorCode AndSource:source AndTarget:target AndHttpStatus:self.responseCode AndBody:downloadResponse]];
         }
     }
-    [self.commandDelegate sendPluginResult:result];
+    
+    [self.command.commandDelegate sendPluginResult:result callbackId:callbackId];
     
     // remove connection for activeTransfers
     @synchronized (command.activeTransfers) {
@@ -603,7 +612,7 @@ RCT_EXPORT_METHOD(download:(NSArray *)args success:(RCTResponseSenderBlock)succe
     
     NSLog(@"File Transfer Error: %@", errorMessage);
     [self cancelTransfer:connection];
-    [self.commandDelegate sendPluginResult:result];
+    [self.command.commandDelegate sendPluginResult:result callbackId:callbackId];
 }
 
 - (NSString *)targetFilePath
@@ -682,7 +691,7 @@ RCT_EXPORT_METHOD(download:(NSArray *)args success:(RCTResponseSenderBlock)succe
     NSLog(@"File Transfer Error: %@", [error localizedDescription]);
     
     [self cancelTransfer:connection];
-    [self.commandDelegate sendPluginResult:result];
+    [self.command.commandDelegate sendPluginResult:result callbackId:callbackId];
 }
 
 - (void)connection:(NSURLConnection*)connection didReceiveData:(NSData*)data
@@ -716,7 +725,6 @@ RCT_EXPORT_METHOD(download:(NSArray *)args success:(RCTResponseSenderBlock)succe
         [downloadProgress setObject:[NSNumber numberWithBool:lengthComputable] forKey:@"lengthComputable"];
         [downloadProgress setObject:[NSNumber numberWithLongLong:self.bytesTransfered] forKey:@"loaded"];
         [downloadProgress setObject:[NSNumber numberWithLongLong:self.bytesExpected] forKey:@"total"];
-        
         [self.command.bridge.eventDispatcher sendAppEventWithName:@"downloadProgress" body:@{@"progress": downloadProgress}];
     }
 }
@@ -729,7 +737,6 @@ RCT_EXPORT_METHOD(download:(NSArray *)args success:(RCTResponseSenderBlock)succe
         [uploadProgress setObject:[NSNumber numberWithBool:true] forKey:@"lengthComputable"];
         [uploadProgress setObject:[NSNumber numberWithLongLong:totalBytesWritten] forKey:@"loaded"];
         [uploadProgress setObject:[NSNumber numberWithLongLong:totalBytesExpectedToWrite] forKey:@"total"];
-        
         [self.command.bridge.eventDispatcher sendAppEventWithName:@"uploadProgress" body:@{@"progress": uploadProgress}];
     }
     self.bytesTransfered = totalBytesWritten;

@@ -18,7 +18,7 @@
  */
 
 #import <Foundation/Foundation.h>
-#import "RCTBridgeModule.h"
+#import "CDVPlugin.h"
 
 enum CDVFileError {
     NO_ERROR = 0,
@@ -55,13 +55,26 @@ typedef int CDVFileTransferDirection;
 // Magic value within the options dict used to set a cookie.
 extern NSString* const kOptionsKeyCookie;
 
-@interface CDVFileTransfer : NSObject <RCTBridgeModule> {}
+@interface CDVFileTransfer : CDVPlugin {}
+
+- (void)upload:(CDVInvokedUrlCommand*)command;
+- (void)download:(CDVInvokedUrlCommand*)command;
+- (NSString*)escapePathComponentForUrlString:(NSString*)urlString;
+
+// Visible for testing.
+- (NSURLRequest*)requestForUploadCommand:(CDVInvokedUrlCommand*)command fileData:(NSData*)fileData;
+- (NSMutableDictionary*)createFileTransferError:(int)code AndSource:(NSString*)source AndTarget:(NSString*)target;
+
+- (NSMutableDictionary*)createFileTransferError:(int)code
+                                      AndSource:(NSString*)source
+                                      AndTarget:(NSString*)target
+                                  AndHttpStatus:(int)httpStatus
+                                        AndBody:(NSString*)body;
 @property (nonatomic, strong) NSOperationQueue* queue;
 @property (readonly) NSMutableDictionary* activeTransfers;
 @end
 
 @class CDVFileTransferEntityLengthRequest;
-@class CDVCommandDelegateImpl;
 
 @interface CDVFileTransferDelegate : NSObject {}
 
@@ -74,10 +87,11 @@ extern NSString* const kOptionsKeyCookie;
 @property (nonatomic, strong) CDVFileTransfer* command;
 @property (nonatomic, assign) CDVFileTransferDirection direction;
 @property (nonatomic, strong) NSURLConnection* connection;
-@property (nonatomic, strong) CDVCommandDelegateImpl* commandDelegate;
+@property (nonatomic, strong) CDVInvokedUrlCommand* callbackId;
 @property (nonatomic, copy) NSString* objectId;
 @property (nonatomic, copy) NSString* source;
 @property (nonatomic, copy) NSString* target;
+@property (nonatomic, copy) NSURL* targetURL;
 @property (nonatomic, copy) NSString* mimeType;
 @property (assign) int responseCode; // atomic
 @property (nonatomic, assign) long long bytesTransfered;

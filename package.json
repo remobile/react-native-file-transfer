@@ -29,6 +29,6 @@
             "url": "git://github.com/remobile/react-native-file-transfer.git"
         },
         "peerDependencies": {
-            "@remobile/react-native-cordova": "latest"
+            "@remobile/react-native-cordova": "^1.0.1"
         }
 }

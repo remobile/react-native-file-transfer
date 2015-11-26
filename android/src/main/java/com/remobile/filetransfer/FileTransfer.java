@@ -63,7 +63,7 @@ import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.remobile.cordova.*;
 import com.facebook.react.bridge.*;
 
-public class FileTransfer extends ReactContextBaseJavaModule {
+public class FileTransfer extends CordovaPlugin {
 
     private static final String LOG_TAG = "FileTransfer";
     private static final String LINE_START = "--";
@@ -79,12 +79,9 @@ public class FileTransfer extends ReactContextBaseJavaModule {
     private static HashMap<String, RequestContext> activeRequests = new HashMap<String, RequestContext>();
     private static final int MAX_BUFFER_SIZE = 16 * 1024;
 
-    public static String FLOG_TAG = "RCTFileTransfer";
-    private ExecutorService threadPool;
 
     public FileTransfer(ReactApplicationContext reactContext) {
         super(reactContext);
-        threadPool = Executors.newCachedThreadPool();
     }
 
     @Override
@@ -98,7 +95,7 @@ public class FileTransfer extends ReactContextBaseJavaModule {
         try {
             this.execute(action, JsonConvert.reactToJSON(args), new CallbackContext(success, error));
         } catch (Exception ex) {
-            FLog.e(FLOG_TAG, "Unexpected error:" + ex.getMessage());
+            FLog.e(LOG_TAG, "Unexpected error:" + ex.getMessage());
         }
     }
 
@@ -108,7 +105,7 @@ public class FileTransfer extends ReactContextBaseJavaModule {
         try {
             this.execute(action, JsonConvert.reactToJSON(args), new CallbackContext(success, error));
         } catch (Exception ex) {
-            FLog.e(FLOG_TAG, "Unexpected error:" + ex.getMessage());
+            FLog.e(LOG_TAG, "Unexpected error:" + ex.getMessage());
         }
     }
 
@@ -118,16 +115,8 @@ public class FileTransfer extends ReactContextBaseJavaModule {
         try {
             this.execute(action, JsonConvert.reactToJSON(args), new CallbackContext(success, error));
         } catch (Exception ex) {
-            FLog.e(FLOG_TAG, "Unexpected error:" + ex.getMessage());
+            FLog.e(LOG_TAG, "Unexpected error:" + ex.getMessage());
         }
-    }
-
-    private void sendEvent(ReactContext reactContext, String eventName, @Nullable WritableMap params) {
-        reactContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class).emit(eventName, params);
-    }
-
-    protected ExecutorService getThreadPool() {
-        return threadPool;
     }
 
     private static final class RequestContext {
@@ -351,7 +340,7 @@ public class FileTransfer extends ReactContextBaseJavaModule {
             activeRequests.put(objectId, context);
         }
 
-        this.getThreadPool().execute(new Runnable() {
+        this.cordova.getThreadPool().execute(new Runnable() {
             public void run() {
                 if (context.aborted) {
                     return;
@@ -500,7 +489,7 @@ public class FileTransfer extends ReactContextBaseJavaModule {
                             progress.setLoaded(totalBytes);
                             WritableMap params = Arguments.createMap();
                             params.putMap("progress", JsonConvert.jsonToReact(progress.toJSONObject()));
-                            sendEvent(getReactApplicationContext(), "uploadProgress", params);
+                            FileTransfer.this.sendJSEvent("uploadProgress", params);
                         }
 
                         if (multipartFormUpload) {
@@ -776,7 +765,7 @@ public class FileTransfer extends ReactContextBaseJavaModule {
             activeRequests.put(objectId, context);
         }
 
-        this.getThreadPool().execute(new Runnable() {
+        this.cordova.getThreadPool().execute(new Runnable() {
             public void run() {
                 if (context.aborted) {
                     return;
@@ -813,7 +802,7 @@ public class FileTransfer extends ReactContextBaseJavaModule {
                         connection = resourceApi.createHttpConnection(sourceUri);
                         if (useHttps && trustEveryone) {
                             // Setup the HTTPS connection class to trust everyone
-                            HttpsURLConnection https = (HttpsURLConnection)connection;
+                            HttpsURLConnection https = (HttpsURLConnection) connection;
                             oldSocketFactory = trustAllHosts(https);
                             // Save the current hostnameVerifier
                             oldHostnameVerifier = https.getHostnameVerifier();
@@ -870,7 +859,7 @@ public class FileTransfer extends ReactContextBaseJavaModule {
                                 progress.setLoaded(inputStream.getTotalRawBytesRead());
                                 WritableMap params = Arguments.createMap();
                                 params.putMap("progress", JsonConvert.jsonToReact(progress.toJSONObject()));
-                                sendEvent(getReactApplicationContext(), "downloadProgress", params);
+                                FileTransfer.this.sendJSEvent("downloadProgress", params);
                             }
                         } finally {
                             synchronized (context) {
@@ -939,7 +928,7 @@ public class FileTransfer extends ReactContextBaseJavaModule {
         }
         if (context != null) {
             // Closing the streams can block, so execute on a background thread.
-            this.getThreadPool().execute(new Runnable() {
+            this.cordova.getThreadPool().execute(new Runnable() {
                 public void run() {
                     synchronized (context) {
                         File file = context.targetFile;
