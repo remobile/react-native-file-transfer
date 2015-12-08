@@ -23,7 +23,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		327632CE1BF99A2F004DA88E /* libCRTFileTransfer.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libCRTFileTransfer.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		327632CE1BF99A2F004DA88E /* libRCTFileTransfer.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libRCTFileTransfer.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		327632E81BF99AC6004DA88E /* CDVFileTransfer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CDVFileTransfer.h; sourceTree = "<group>"; };
 		327632E91BF99AC6004DA88E /* CDVFileTransfer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CDVFileTransfer.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -42,7 +42,7 @@
 		327632C51BF99A2F004DA88E = {
 			isa = PBXGroup;
 			children = (
-				327632D01BF99A2F004DA88E /* CRTFileTransfer */,
+				327632D01BF99A2F004DA88E /* RCTFileTransfer */,
 				327632CF1BF99A2F004DA88E /* Products */,
 			);
 			sourceTree = "<group>";
@@ -50,26 +50,26 @@
 		327632CF1BF99A2F004DA88E /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				327632CE1BF99A2F004DA88E /* libCRTFileTransfer.a */,
+				327632CE1BF99A2F004DA88E /* libRCTFileTransfer.a */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		327632D01BF99A2F004DA88E /* CRTFileTransfer */ = {
+		327632D01BF99A2F004DA88E /* RCTFileTransfer */ = {
 			isa = PBXGroup;
 			children = (
 				327632E81BF99AC6004DA88E /* CDVFileTransfer.h */,
 				327632E91BF99AC6004DA88E /* CDVFileTransfer.m */,
 			);
-			path = CRTFileTransfer;
+			path = RCTFileTransfer;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		327632CD1BF99A2F004DA88E /* CRTFileTransfer */ = {
+		327632CD1BF99A2F004DA88E /* RCTFileTransfer */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 327632E21BF99A2F004DA88E /* Build configuration list for PBXNativeTarget "CRTFileTransfer" */;
+			buildConfigurationList = 327632E21BF99A2F004DA88E /* Build configuration list for PBXNativeTarget "RCTFileTransfer" */;
 			buildPhases = (
 				327632CA1BF99A2F004DA88E /* Sources */,
 				327632CB1BF99A2F004DA88E /* Frameworks */,
@@ -79,9 +79,9 @@
 			);
 			dependencies = (
 			);
-			name = CRTFileTransfer;
-			productName = CRTFileTransfer;
-			productReference = 327632CE1BF99A2F004DA88E /* libCRTFileTransfer.a */;
+			name = RCTFileTransfer;
+			productName = RCTFileTransfer;
+			productReference = 327632CE1BF99A2F004DA88E /* libRCTFileTransfer.a */;
 			productType = "com.apple.product-type.library.static";
 		};
 /* End PBXNativeTarget section */
@@ -98,7 +98,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 327632C91BF99A2F004DA88E /* Build configuration list for PBXProject "CRTFileTransfer" */;
+			buildConfigurationList = 327632C91BF99A2F004DA88E /* Build configuration list for PBXProject "RCTFileTransfer" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
@@ -110,7 +110,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				327632CD1BF99A2F004DA88E /* CRTFileTransfer */,
+				327632CD1BF99A2F004DA88E /* RCTFileTransfer */,
 			);
 		};
 /* End PBXProject section */
@@ -238,7 +238,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		327632C91BF99A2F004DA88E /* Build configuration list for PBXProject "CRTFileTransfer" */ = {
+		327632C91BF99A2F004DA88E /* Build configuration list for PBXProject "RCTFileTransfer" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				327632E01BF99A2F004DA88E /* Debug */,
@@ -247,7 +247,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		327632E21BF99A2F004DA88E /* Build configuration list for PBXNativeTarget "CRTFileTransfer" */ = {
+		327632E21BF99A2F004DA88E /* Build configuration list for PBXNativeTarget "RCTFileTransfer" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				327632E31BF99A2F004DA88E /* Debug */,
