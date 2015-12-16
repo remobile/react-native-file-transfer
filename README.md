@@ -71,26 +71,13 @@ var {
     Text,
 } = React;
 
-var FileTransfer = require('react-native-file-transfer');
+var FileTransfer = require('@remobile/react-native-file-transfer');
 var Button = require('@remobile/react-native-simple-button');
 
 module.exports = React.createClass({
-    getInitialState () {
-        return {
-            image:null,
-        };
-    },
-    uploadSuccessCallback(ret) {
-        console.log(ret);
-        this.uploadProgress.remove();
-    },
-    uploadErrorCallback(error) {
-        console.log(error);
-        this.uploadProgress.remove();
-    },
     testUpload() {
-        var fileURL = 'file:///Users/fang/node/test/post.js';
-        var options = new FileTransfer.FileUploadOptions();
+        var fileURL = app.isandroid?'file:///sdcard/data/1.jpg':'file:///Users/fang/node/test/post.js';
+        var options = {};
         options.fileKey = 'file';
         options.fileName = fileURL.substr(fileURL.lastIndexOf('/')+1);
         options.mimeType = 'text/plain';
@@ -100,34 +87,28 @@ module.exports = React.createClass({
         params.value2 = 'param';
 
         options.params = params;
-        var ft = new FileTransfer();
+        var fileTransfer = new FileTransfer();
+        fileTransfer.onprogress = (progress) => console.log(progress);
 
-        this.uploadProgress = NativeAppEventEmitter.addListener(
-          'uploadProgress',
-          (progress) => console.log(progress)
-        );
 
-        ft.upload(fileURL, encodeURI('http://192.168.1.117:3000/upload'), this.uploadSuccessCallback, this.uploadErrorCallback, options);
+        fileTransfer.upload(fileURL, encodeURI('http://192.168.1.119:3000/upload'),(result)=>{
+            console.log(result);
+        }, (error)=>{
+            console.log(error);
+        }, options);
     },
     testDownload() {
         var fileTransfer = new FileTransfer();
-          var uri = encodeURI("http://192.168.1.117:3000/helpAndAbout/help");
-          this.downloadProgress = NativeAppEventEmitter.addListener(
-            'downloadProgress',
-            (progress) => console.log(progress)
-          );
-          var self = this;
+          var uri = encodeURI("http://192.168.1.119:3000/Framework7.zip");
+          fileTransfer.onprogress = (progress) => console.log("1",progress.loaded+'/'+progress.total);
           fileTransfer.download(
               uri,
-            //   '/Users/fang/oldwork/client/server/xxx.html',
-            '/sdcard1/1/xx.html',
-              function(entry) {
-                  console.log(entry);
-                  self.downloadProgress.remove();
+              app.isandroid?'/sdcard/data/xx.html':'/Users/fang/oldwork/client/server/xx.zip',
+              function(result) {
+                  console.log(result);
               },
               function(error) {
                   console.log(error);
-                  self.downloadProgress.remove();
               },
               true
           );
@@ -153,7 +134,7 @@ var styles = StyleSheet.create({
         justifyContent: 'space-around',
         alignItems: 'center',
         backgroundColor: 'transparent',
-        paddingVertical:250,
+        paddingVertical:200,
     }
 });
 ```

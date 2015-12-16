@@ -725,7 +725,7 @@ RCT_EXPORT_CORDOVA_METHOD(abort);
         [downloadProgress setObject:[NSNumber numberWithBool:lengthComputable] forKey:@"lengthComputable"];
         [downloadProgress setObject:[NSNumber numberWithLongLong:self.bytesTransfered] forKey:@"loaded"];
         [downloadProgress setObject:[NSNumber numberWithLongLong:self.bytesExpected] forKey:@"total"];
-        [self.command.bridge.eventDispatcher sendAppEventWithName:@"downloadProgress" body:@{@"progress": downloadProgress}];
+        [self.command.bridge.eventDispatcher sendAppEventWithName:[NSString stringWithFormat:@"DownloadProgress-%@", self.objectId] body:downloadProgress];
     }
 }
 
@@ -737,7 +737,7 @@ RCT_EXPORT_CORDOVA_METHOD(abort);
         [uploadProgress setObject:[NSNumber numberWithBool:true] forKey:@"lengthComputable"];
         [uploadProgress setObject:[NSNumber numberWithLongLong:totalBytesWritten] forKey:@"loaded"];
         [uploadProgress setObject:[NSNumber numberWithLongLong:totalBytesExpectedToWrite] forKey:@"total"];
-        [self.command.bridge.eventDispatcher sendAppEventWithName:@"uploadProgress" body:@{@"progress": uploadProgress}];
+        [self.command.bridge.eventDispatcher sendAppEventWithName:[NSString stringWithFormat:@"UploadProgress-%@", self.objectId] body:uploadProgress];
     }
     self.bytesTransfered = totalBytesWritten;
 }

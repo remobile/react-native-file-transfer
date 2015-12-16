@@ -1,6 +1,6 @@
 {
     "name": "@remobile/react-native-file-transfer",
-        "version": "1.0.3",
+        "version": "1.0.4",
         "description": "A file-transfer for react-native, code come from cordova, support for android and ios",
         "main": "index.js",
         "author": {
@@ -29,6 +29,6 @@
             "url": "git://github.com/remobile/react-native-file-transfer.git"
         },
         "peerDependencies": {
-            "@remobile/react-native-cordova": "^1.0.6"
+            "@remobile/react-native-cordova": "^1.0.9"
         }
 }
