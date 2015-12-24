@@ -487,9 +487,7 @@ public class FileTransfer extends CordovaPlugin {
 
                             // Send a progress event.
                             progress.setLoaded(totalBytes);
-                            WritableMap params = Arguments.createMap();
-                            params.putMap("progress", JsonConvert.jsonToReact(progress.toJSONObject()));
-                            FileTransfer.this.sendJSEvent("uploadProgress", params);
+                            FileTransfer.this.sendJSEvent("UploadProgress-"+objectId, JsonConvert.jsonToReact(progress.toJSONObject()));
                         }
 
                         if (multipartFormUpload) {
@@ -857,9 +855,7 @@ public class FileTransfer extends CordovaPlugin {
                                 outputStream.write(buffer, 0, bytesRead);
                                 // Send a progress event.
                                 progress.setLoaded(inputStream.getTotalRawBytesRead());
-                                WritableMap params = Arguments.createMap();
-                                params.putMap("progress", JsonConvert.jsonToReact(progress.toJSONObject()));
-                                FileTransfer.this.sendJSEvent("downloadProgress", params);
+                                FileTransfer.this.sendJSEvent("DownloadProgress-"+objectId, JsonConvert.jsonToReact(progress.toJSONObject()));
                             }
                         } finally {
                             synchronized (context) {
