@@ -15,7 +15,7 @@ npm install @remobile/react-native-file-transfer --save
 ```gradle
 ...
 include ':react-native-file-transfer'
-project(':react-native-file-transfer').projectDir = new File(rootProject.projectDir, '../node_modules/@remobile/react-native-file-transfer/android')
+project(':react-native-file-transfer').projectDir = new File(settingsDir, '../node_modules/@remobile/react-native-file-transfer/android')
 ```
 
 * In `android/app/build.gradle`
