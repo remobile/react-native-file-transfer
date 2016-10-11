@@ -25,8 +25,8 @@ var argscheck = require('@remobile/react-native-cordova').argscheck,
     FileTransferError = require('./FileTransferError'),
     ProgressEvent = require('@remobile/react-native-cordova').ProgressEvent;
 
-var {NativeAppEventEmitter, DeviceEventEmitter, Platform} = require('react-native');
-var EventEmitter = Platform.OS==="android"?DeviceEventEmitter:NativeAppEventEmitter;
+var {NativeEventEmitter, DeviceEventEmitter, Platform, NativeModules} = require('react-native');
+var EventEmitter = Platform.OS==="android"?DeviceEventEmitter:new NativeEventEmitter(NativeModules.FileTransfer);
 
 
 function newProgressEvent(result) {

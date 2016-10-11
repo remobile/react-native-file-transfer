@@ -55,7 +55,7 @@ typedef int CDVFileTransferDirection;
 // Magic value within the options dict used to set a cookie.
 extern NSString* const kOptionsKeyCookie;
 
-@interface CDVFileTransfer : CDVPlugin {}
+@interface CDVFileTransfer : CDVPluginEventEmitter {}
 
 - (void)upload:(CDVInvokedUrlCommand*)command;
 - (void)download:(CDVInvokedUrlCommand*)command;
@@ -72,6 +72,7 @@ extern NSString* const kOptionsKeyCookie;
                                         AndBody:(NSString*)body;
 @property (nonatomic, strong) NSOperationQueue* queue;
 @property (readonly) NSMutableDictionary* activeTransfers;
+@property (nonatomic, assign) long long _totalPayloadLength;
 @end
 
 @class CDVFileTransferEntityLengthRequest;
@@ -87,7 +88,7 @@ extern NSString* const kOptionsKeyCookie;
 @property (nonatomic, strong) CDVFileTransfer* command;
 @property (nonatomic, assign) CDVFileTransferDirection direction;
 @property (nonatomic, strong) NSURLConnection* connection;
-@property (nonatomic, strong) CDVInvokedUrlCommand* callbackId;
+@property (nonatomic, strong) NSString* callbackId;
 @property (nonatomic, copy) NSString* objectId;
 @property (nonatomic, copy) NSString* source;
 @property (nonatomic, copy) NSString* target;
@@ -99,5 +100,6 @@ extern NSString* const kOptionsKeyCookie;
 @property (nonatomic, assign) BOOL trustAllHosts;
 @property (strong) NSFileHandle* targetFileHandle;
 @property (nonatomic, strong) CDVFileTransferEntityLengthRequest* entityLengthRequest;
+@property (nonatomic, assign) BOOL chunkedMode;
 
 @end

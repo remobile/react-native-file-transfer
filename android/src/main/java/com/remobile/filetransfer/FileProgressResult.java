@@ -57,7 +57,7 @@ public class FileProgressResult {
     public JSONObject toJSONObject() throws JSONException {
         return new JSONObject(
                 "{loaded:" + loaded +
-                        ",total:" + total +
-                        ",lengthComputable:" + (lengthComputable ? "true" : "false") + "}");
+                ",total:" + total +
+                ",lengthComputable:" + (lengthComputable ? "true" : "false") + "}");
     }
 }

@@ -28,48 +28,35 @@ dependencies {
 }
 ```
 
-* register module (in MainActivity.java)
+* register module (in MainApplication.java)
 
 ```java
-import com.remobile.filetransfer.*;  // <--- import
+......
+import com.remobile.filetransfer.RCTFileTransferPackage;  // <--- import
 
-public class MainActivity extends Activity implements DefaultHardwareBackBtnHandler {
-  ......
-  @Override
-  protected void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-    mReactRootView = new ReactRootView(this);
+......
 
-    mReactInstanceManager = ReactInstanceManager.builder()
-      .setApplication(getApplication())
-      .setBundleAssetName("index.android.bundle")
-      .setJSMainModuleName("index.android")
-      .addPackage(new MainReactPackage())
-      .addPackage(new RCTFileTransferPackage())              // <------ add here
-      .setUseDeveloperSupport(BuildConfig.DEBUG)
-      .setInitialLifecycleState(LifecycleState.RESUMED)
-      .build();
-
-    mReactRootView.startReactApplication(mReactInstanceManager, "ExampleRN", null);
-
-    setContentView(mReactRootView);
-  }
-
-  ......
+@Override
+protected List<ReactPackage> getPackages() {
+   ......
+   new RCTFileTransferPackage(),            // <------ add here
+   ......
 }
+
 ```
 
 ## Usage
 
 ### Example
 ```js
-var React = require('react-native');
+var React = require('react');
+var ReactNative = require('react-native');
 var {
     StyleSheet,
     NativeAppEventEmitter,
     View,
     Text,
-} = React;
+} = ReactNative;
 
 var FileTransfer = require('@remobile/react-native-file-transfer');
 var Button = require('@remobile/react-native-simple-button');
@@ -145,3 +132,7 @@ var styles = StyleSheet.create({
 
 ### thanks
 * this project come from https://github.com/apache/cordova-plugin-file-transfer
+
+
+### see detail use
+* https://github.com/remobile/react-native-template
