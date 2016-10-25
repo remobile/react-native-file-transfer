@@ -168,7 +168,6 @@ FileTransfer.prototype.upload = function(filePath, server, successCallback, erro
             self.onprogress(newProgressEvent(result));
         });
     }
-    console.log(filePath, server, fileKey, fileName, mimeType, params, trustAllHosts, chunkedMode, headers, this._id, httpMethod);
     exec(win, fail, 'FileTransfer', 'upload', [filePath, server, fileKey, fileName, mimeType, params, trustAllHosts, chunkedMode, headers, this._id, httpMethod]);
 };
 

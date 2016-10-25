@@ -349,15 +349,36 @@ RCT_EXPORT_CORDOVA_METHOD(abort);
             return;
         }
 
-        // Memory map the file so that it can be read efficiently even if it is large.
-        NSData* fileData = [NSData dataWithContentsOfFile:filePath options:NSDataReadingMappedIfSafe error:&err];
-
-        if (err != nil) {
-            NSLog(@"Error opening file %@: %@", source, err);
-            CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:[self createFileTransferError:NOT_FOUND_ERR AndSource:source AndTarget:server]];
-            [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+        NSURL *url = [NSURL URLWithString:source];
+        BOOL isAsset = [[url scheme] isEqualToString:@"assets-library"];
+        if (isAsset) {
+            // This is an asset library path.
+            ALAssetsLibrary *assetLibrary=[[ALAssetsLibrary alloc] init];
+            [assetLibrary
+                assetForURL:url
+                resultBlock:^(ALAsset *asset) {
+                    ALAssetRepresentation *rep = [asset defaultRepresentation];
+                    Byte *buffer = (Byte*)malloc(rep.size);
+                    NSUInteger buffered = [rep getBytes:buffer fromOffset:0.0 length:rep.size error:nil];
+                    NSData *data = [NSData dataWithBytesNoCopy:buffer length:buffered freeWhenDone:YES];
+                    [self uploadData:data command:command];
+                }
+                failureBlock:^(NSError *err) {
+                    NSLog(@"Error opening file %@: %@", source, err);
+                    CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:[self createFileTransferError:NOT_FOUND_ERR AndSource:source AndTarget:server]];
+                    [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+                }];
         } else {
-            [self uploadData:fileData command:command];
+            // Memory map the file so that it can be read efficiently even if it is large.
+            NSData* fileData = [NSData dataWithContentsOfFile:filePath options:NSDataReadingMappedIfSafe error:&err];
+
+            if (err == nil) {
+                [self uploadData:fileData command:command];
+            } else {
+                NSLog(@"Error opening file %@: %@", source, err);
+                CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:[self createFileTransferError:NOT_FOUND_ERR AndSource:source AndTarget:server]];
+                [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+            }
         }
     }
 }
