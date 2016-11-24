@@ -19,6 +19,7 @@
 
 #import <Foundation/Foundation.h>
 #import "CDVPlugin.h"
+@import Photos;
 
 enum CDVFileError {
     NO_ERROR = 0,

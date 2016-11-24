@@ -350,8 +350,50 @@ RCT_EXPORT_CORDOVA_METHOD(abort);
         }
 
         NSURL *url = [NSURL URLWithString:source];
+        BOOL isPHAsset = [[url scheme] isEqualToString:@"pk"];
         BOOL isAsset = [[url scheme] isEqualToString:@"assets-library"];
-        if (isAsset) {
+        if (isPHAsset) {
+            NSString* identifier = [[url host] stringByAppendingString:[url path]];
+            PHAsset* asset = [[PHAsset fetchAssetsWithLocalIdentifiers:@[identifier] options:nil] firstObject];
+            PHImageRequestOptions *options = [[PHImageRequestOptions alloc] init];
+            [options setDeliveryMode:PHImageRequestOptionsDeliveryModeHighQualityFormat];
+            [options setResizeMode:PHImageRequestOptionsResizeModeNone];
+            [options setVersion:PHImageRequestOptionsVersionOriginal];
+            if (asset.mediaType == PHAssetMediaTypeVideo) {
+                [[PHImageManager defaultManager] requestAVAssetForVideo:asset options:options resultHandler:^(AVAsset *asset, AVAudioMix *audioMix, NSDictionary *info) {
+                    if ([asset isKindOfClass:[AVURLAsset class]]) {
+                        NSURL *URL = [(AVURLAsset *)asset URL];
+                        NSData *videoData=[NSData dataWithContentsOfURL:URL];
+                        NSLog(@"Uploading video data");
+                        [self uploadData:videoData command:command];
+                    }
+                    if (([asset isKindOfClass:[AVComposition class]] && ((AVComposition *)asset).tracks.count == 2)) {
+                        //slow motion videos. See Here: https://overflow.buffer.com/2016/02/29/slow-motion-video-ios/
+                        NSString * fileName = @"slowMotionVideo.mov";
+                        NSURL *url = [NSURL fileURLWithPath:[NSTemporaryDirectory() stringByAppendingPathComponent:fileName]];
+                        AVAssetExportSession *exporter = [[AVAssetExportSession alloc] initWithAsset:asset presetName:AVAssetExportPresetHighestQuality];
+                        exporter.outputURL = url;
+                        exporter.outputFileType = AVFileTypeQuickTimeMovie;
+                        exporter.shouldOptimizeForNetworkUse = YES;
+                        [exporter exportAsynchronouslyWithCompletionHandler:^{
+                            dispatch_async(dispatch_get_main_queue(), ^{
+                                if (exporter.status == AVAssetExportSessionStatusCompleted) {
+                                    NSURL *URL = exporter.outputURL;
+                                    NSData *videoData = [NSData dataWithContentsOfURL:URL];
+                                    NSLog(@"Uploading slow motion video.");
+                                    [self uploadData:videoData command:command];
+                                }
+                            });
+                        }];
+                    }
+                }];
+            } else if (asset.mediaType == PHAssetMediaTypeImage) {
+                [[PHImageManager defaultManager] requestImageDataForAsset:asset options:options resultHandler:^(NSData * _Nullable imageData, NSString * _Nullable dataUTI, UIImageOrientation orientation, NSDictionary * _Nullable info) {
+                    NSLog(@"Uploading super data.");
+                    [self uploadData:imageData command:command];
+                }];
+            }
+        } else if (isAsset) {
             // This is an asset library path.
             ALAssetsLibrary *assetLibrary=[[ALAssetsLibrary alloc] init];
             [assetLibrary
