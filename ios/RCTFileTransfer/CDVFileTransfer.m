@@ -23,6 +23,7 @@
 #import <AssetsLibrary/ALAssetRepresentation.h>
 #import <AssetsLibrary/ALAssetsLibrary.h>
 #import <CFNetwork/CFNetwork.h>
+#import "RCTProfile.h"
 
 #ifndef DLog
 #ifdef DEBUG
@@ -91,6 +92,60 @@ RCT_EXPORT_MODULE(FileTransfer)
 RCT_EXPORT_CORDOVA_METHOD(download);
 RCT_EXPORT_CORDOVA_METHOD(upload);
 RCT_EXPORT_CORDOVA_METHOD(abort);
+
+- (void)getDataForURL:(NSURL*)url completion:(void(^)(NSString *, NSData *))complete {
+    NSString* identifier = [[url host] stringByAppendingString:[url path]];
+    PHAsset* asset = [[PHAsset fetchAssetsWithLocalIdentifiers:@[identifier] options:nil] firstObject];
+    PHImageRequestOptions *options = [[PHImageRequestOptions alloc] init];
+    [options setDeliveryMode:PHImageRequestOptionsDeliveryModeHighQualityFormat];
+    [options setResizeMode:PHImageRequestOptionsResizeModeNone];
+    [options setVersion:PHImageRequestOptionsVersionOriginal];
+    if (asset.mediaType == PHAssetMediaTypeVideo) {
+        [[PHImageManager defaultManager] requestAVAssetForVideo:asset options:options resultHandler:^(AVAsset *asset, AVAudioMix *audioMix, NSDictionary *info) {
+            if ([asset isKindOfClass:[AVURLAsset class]]) {
+                NSURL *url = [(AVURLAsset *)asset URL];
+                NSData *videoData=[NSData dataWithContentsOfURL:url];
+                DLog(@"Video with url: %@", url);
+                complete(url.lastPathComponent, videoData);
+            }
+            if (([asset isKindOfClass:[AVComposition class]] && ((AVComposition *)asset).tracks.count == 2)) {
+                //slow motion videos. See Here: https://overflow.buffer.com/2016/02/29/slow-motion-video-ios/
+                NSString * fileName = @"slowMotionVideo.mov";
+                NSURL *url = [NSURL fileURLWithPath:[NSTemporaryDirectory() stringByAppendingPathComponent:fileName]];
+                AVAssetExportSession *exporter = [[AVAssetExportSession alloc] initWithAsset:asset presetName:AVAssetExportPresetHighestQuality];
+                exporter.outputURL = url;
+                exporter.outputFileType = AVFileTypeQuickTimeMovie;
+                exporter.shouldOptimizeForNetworkUse = YES;
+                [exporter exportAsynchronouslyWithCompletionHandler:^{
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        if (exporter.status == AVAssetExportSessionStatusCompleted) {
+                            NSURL *url = exporter.outputURL;
+                            NSData *videoData = [NSData dataWithContentsOfURL:url];
+                            DLog(@"Slow Motion Video with url: %@", url);
+                            complete(url.lastPathComponent, videoData);
+                        }
+                    });
+                }];
+            }
+        }];
+    } else if (asset.mediaType == PHAssetMediaTypeImage) {
+        [[PHImageManager defaultManager] requestImageDataForAsset:asset options:options resultHandler:^(NSData * _Nullable imageData, NSString * _Nullable dataUTI, UIImageOrientation orientation, NSDictionary * _Nullable info) {
+            NSString *url = info[@"PHImageFileURLKey"];
+            DLog(@"Image with url: %@", url);
+            complete(url.lastPathComponent, imageData);
+        }];
+    }
+}
+
+RCT_EXPORT_METHOD(getUploadMeta:(NSDictionary *)params
+                  resolve:(RCTPromiseResolveBlock)resolve
+                  reject:(RCTPromiseRejectBlock)reject)
+{
+    NSURL *url = [NSURL URLWithString:params[@"uri"]];
+    [self getDataForURL:url completion:^(NSString *fileName, NSData *data) {
+        resolve(@{@"fileName" : fileName});
+    }];
+}
 
 - (void)pluginInitialize {
     activeTransfers = [[NSMutableDictionary alloc] init];
@@ -350,78 +405,9 @@ RCT_EXPORT_CORDOVA_METHOD(abort);
         }
 
         NSURL *url = [NSURL URLWithString:source];
-        BOOL isPHAsset = [[url scheme] isEqualToString:@"pk"];
-        BOOL isAsset = [[url scheme] isEqualToString:@"assets-library"];
-        if (isPHAsset) {
-            NSString* identifier = [[url host] stringByAppendingString:[url path]];
-            PHAsset* asset = [[PHAsset fetchAssetsWithLocalIdentifiers:@[identifier] options:nil] firstObject];
-            PHImageRequestOptions *options = [[PHImageRequestOptions alloc] init];
-            [options setDeliveryMode:PHImageRequestOptionsDeliveryModeHighQualityFormat];
-            [options setResizeMode:PHImageRequestOptionsResizeModeNone];
-            [options setVersion:PHImageRequestOptionsVersionOriginal];
-            if (asset.mediaType == PHAssetMediaTypeVideo) {
-                [[PHImageManager defaultManager] requestAVAssetForVideo:asset options:options resultHandler:^(AVAsset *asset, AVAudioMix *audioMix, NSDictionary *info) {
-                    if ([asset isKindOfClass:[AVURLAsset class]]) {
-                        NSURL *URL = [(AVURLAsset *)asset URL];
-                        NSData *videoData=[NSData dataWithContentsOfURL:URL];
-                        NSLog(@"Uploading video data");
-                        [self uploadData:videoData command:command];
-                    }
-                    if (([asset isKindOfClass:[AVComposition class]] && ((AVComposition *)asset).tracks.count == 2)) {
-                        //slow motion videos. See Here: https://overflow.buffer.com/2016/02/29/slow-motion-video-ios/
-                        NSString * fileName = @"slowMotionVideo.mov";
-                        NSURL *url = [NSURL fileURLWithPath:[NSTemporaryDirectory() stringByAppendingPathComponent:fileName]];
-                        AVAssetExportSession *exporter = [[AVAssetExportSession alloc] initWithAsset:asset presetName:AVAssetExportPresetHighestQuality];
-                        exporter.outputURL = url;
-                        exporter.outputFileType = AVFileTypeQuickTimeMovie;
-                        exporter.shouldOptimizeForNetworkUse = YES;
-                        [exporter exportAsynchronouslyWithCompletionHandler:^{
-                            dispatch_async(dispatch_get_main_queue(), ^{
-                                if (exporter.status == AVAssetExportSessionStatusCompleted) {
-                                    NSURL *URL = exporter.outputURL;
-                                    NSData *videoData = [NSData dataWithContentsOfURL:URL];
-                                    NSLog(@"Uploading slow motion video.");
-                                    [self uploadData:videoData command:command];
-                                }
-                            });
-                        }];
-                    }
-                }];
-            } else if (asset.mediaType == PHAssetMediaTypeImage) {
-                [[PHImageManager defaultManager] requestImageDataForAsset:asset options:options resultHandler:^(NSData * _Nullable imageData, NSString * _Nullable dataUTI, UIImageOrientation orientation, NSDictionary * _Nullable info) {
-                    NSLog(@"Uploading super data.");
-                    [self uploadData:imageData command:command];
-                }];
-            }
-        } else if (isAsset) {
-            // This is an asset library path.
-            ALAssetsLibrary *assetLibrary=[[ALAssetsLibrary alloc] init];
-            [assetLibrary
-                assetForURL:url
-                resultBlock:^(ALAsset *asset) {
-                    ALAssetRepresentation *rep = [asset defaultRepresentation];
-                    Byte *buffer = (Byte*)malloc(rep.size);
-                    NSUInteger buffered = [rep getBytes:buffer fromOffset:0.0 length:rep.size error:nil];
-                    NSData *data = [NSData dataWithBytesNoCopy:buffer length:buffered freeWhenDone:YES];
-                    [self uploadData:data command:command];
-                }
-                failureBlock:^(NSError *err) {
-                    NSLog(@"Error opening file %@: %@", source, err);
-                    CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:[self createFileTransferError:NOT_FOUND_ERR AndSource:source AndTarget:server]];
-                    [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
-                }];
-        } else {
-            // Memory map the file so that it can be read efficiently even if it is large.
-            NSData* fileData = [NSData dataWithContentsOfFile:filePath options:NSDataReadingMappedIfSafe error:&err];
-
-            if (err == nil) {
-                [self uploadData:fileData command:command];
-            } else {
-                NSLog(@"Error opening file %@: %@", source, err);
-                CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:[self createFileTransferError:NOT_FOUND_ERR AndSource:source AndTarget:server]];
-                [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
-            }
-        }
+        [self getDataForURL:url completion:^(NSString *fileName, NSData *data) {
+            [self uploadData:data command:command];
+        }];
     }
 }
 
@@ -870,3 +856,4 @@ RCT_EXPORT_CORDOVA_METHOD(abort);
 }
 
 @end
+
