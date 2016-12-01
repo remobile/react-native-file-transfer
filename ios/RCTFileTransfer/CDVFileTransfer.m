@@ -100,6 +100,7 @@ RCT_EXPORT_CORDOVA_METHOD(abort);
     [options setDeliveryMode:PHImageRequestOptionsDeliveryModeHighQualityFormat];
     [options setResizeMode:PHImageRequestOptionsResizeModeNone];
     [options setVersion:PHImageRequestOptionsVersionOriginal];
+    [options setNetworkAccessAllowed:YES];
     if (asset.mediaType == PHAssetMediaTypeVideo) {
         [[PHImageManager defaultManager] requestAVAssetForVideo:asset options:options resultHandler:^(AVAsset *asset, AVAudioMix *audioMix, NSDictionary *info) {
             if ([asset isKindOfClass:[AVURLAsset class]]) {
