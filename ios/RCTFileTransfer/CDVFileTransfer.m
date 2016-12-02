@@ -152,8 +152,9 @@ RCT_EXPORT_CORDOVA_METHOD(abort);
              Byte *buffer = (Byte*)malloc(rep.size);
              NSUInteger buffered = [rep getBytes:buffer fromOffset:0.0 length:rep.size error:nil];
              NSData *data = [NSData dataWithBytesNoCopy:buffer length:buffered freeWhenDone:YES];
-             DLog(@"Asset with url: %@", url);
-             complete(url.lastPathComponent, data);
+             NSString *fileName = [@"MyCloud." stringByAppendingString:url.pathExtension];
+             DLog(@"Asset with name: %@", fileName);
+             complete(fileName, data);
          }
          failureBlock:^(NSError *err) {
              NSLog(@"Error opening file: %@, %@", url, err);
@@ -165,8 +166,9 @@ RCT_EXPORT_CORDOVA_METHOD(abort);
         NSData* fileData = [NSData dataWithContentsOfFile:[url path] options:NSDataReadingMappedIfSafe error:&err];
         
         if (err == nil) {
-            DLog(@"File with url: %@", url);
-            complete(url.lastPathComponent, fileData);
+            NSString *fileName = [@"MyCloud." stringByAppendingString:url.pathExtension];
+            DLog(@"File with name: %@", fileName);
+            complete(fileName, fileData);
         } else {
             NSLog(@"Error opening file: %@, %@", url, err);
             complete(nil, nil);
