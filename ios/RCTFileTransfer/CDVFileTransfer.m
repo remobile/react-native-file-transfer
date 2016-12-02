@@ -99,12 +99,11 @@ RCT_EXPORT_CORDOVA_METHOD(abort);
     BOOL isAsset = [[url scheme] isEqualToString:@"assets-library"];
     if (isPHAsset) {
         PHAsset* asset = [[PHAsset fetchAssetsWithLocalIdentifiers:@[identifier] options:nil] firstObject];
-        PHImageRequestOptions *options = [[PHImageRequestOptions alloc] init];
-        [options setDeliveryMode:PHImageRequestOptionsDeliveryModeHighQualityFormat];
-        [options setResizeMode:PHImageRequestOptionsResizeModeNone];
-        [options setVersion:PHImageRequestOptionsVersionOriginal];
-        [options setNetworkAccessAllowed:YES];
         if (asset.mediaType == PHAssetMediaTypeVideo) {
+            PHVideoRequestOptions *options = [[PHVideoRequestOptions alloc] init];
+            [options setDeliveryMode:PHVideoRequestOptionsDeliveryModeHighQualityFormat];
+            [options setVersion:PHVideoRequestOptionsVersionOriginal];
+            [options setNetworkAccessAllowed:YES];
             [[PHImageManager defaultManager] requestAVAssetForVideo:asset options:options resultHandler:^(AVAsset *asset, AVAudioMix *audioMix, NSDictionary *info) {
                 if ([asset isKindOfClass:[AVURLAsset class]]) {
                     NSURL *url = [(AVURLAsset *)asset URL];
@@ -133,6 +132,11 @@ RCT_EXPORT_CORDOVA_METHOD(abort);
                 }
             }];
         } else if (asset.mediaType == PHAssetMediaTypeImage) {
+            PHImageRequestOptions *options = [[PHImageRequestOptions alloc] init];
+            [options setDeliveryMode:PHImageRequestOptionsDeliveryModeHighQualityFormat];
+            [options setResizeMode:PHImageRequestOptionsResizeModeNone];
+            [options setVersion:PHImageRequestOptionsVersionOriginal];
+            [options setNetworkAccessAllowed:YES];
             [[PHImageManager defaultManager] requestImageDataForAsset:asset options:options resultHandler:^(NSData * _Nullable imageData, NSString * _Nullable dataUTI, UIImageOrientation orientation, NSDictionary * _Nullable info) {
                 NSURL *url = info[@"PHImageFileURLKey"];
                 DLog(@"Image with url: %@", url);
