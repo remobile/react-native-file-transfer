@@ -1,4 +1,4 @@
 'use strict';
-var FileTransfer = require('./libs/FileTransfer.js');
+const FileTransfer = require('./libs/FileTransfer.js');
 
 module.exports = FileTransfer;
